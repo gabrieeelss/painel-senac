@@ -2,7 +2,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'roboto', sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 body {
@@ -28,6 +28,7 @@ form {
 label {
   display: block;
   margin-top: 1rem;
+  font-weight: bold;
 }
 
 input, textarea, select, button {
@@ -44,17 +45,19 @@ button {
   font-weight: lighter;
   cursor: pointer;
   margin-top: 1rem;
+  margin-bottom: 1.5rem;
+  justify-content: center;
 }
 
 .cards {
-  display: flex;
+  display: grid;
   flex-wrap: wrap;
   gap: 1rem;
   justify-content: center;
 }
 
 .card {
-  background: white;
+  background: #FDC180;
   padding: 1rem;
   width: 100%;
   max-width: 300px;
@@ -62,6 +65,8 @@ button {
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   cursor: pointer;
   transition: transform 0.2s;
+  border-color: #F7941D;
+  border-style: solid;
 }
 
 .card:hover {
