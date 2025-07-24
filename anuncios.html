@@ -17,25 +17,24 @@
 
   <h1>Mural de Serviços</h1>
 
-  <form id="serviceForm">
-    <label>Nome:
-      <input type="text" id="name" required>
-    </label>
-    <label>Contato:
-      <input type="text" id="contact" required>
-    </label>
-    <label>Tipo de Serviço:
-      <input type="text" id="servico" required>
-    </label>
-    <label>Descrição:
-      <textarea id="description" rows="4" required></textarea>
-    </label>
+<form id="cadastroForm">
+  <label>Nome:
+<input type="text" id="anunciante" placeholder="Nome do Anunciante" required />
+  </label>
+  <label>Serviço:
+<input type="text" id="servico" placeholder="Serviço" required />
+</label>
+<label>Detalhes do Serviço:
+<textarea id="detalhamento" rows="4" placeholder="Detalhamento do serviço" required></textarea>
+</label>
+<label>Categoria:
+<input type="text" id="categoria" placeholder="Categoria" required />
+</label>
+<label>Telefone (WhatsApp):
+<input type="tel" id="telefone" placeholder="Telefone" required />
 
-    <div class="g-recaptcha" data-sitekey="SUA_CHAVE_SITE_AQUI"></div>
-
-    <button type="submit">Cadastrar Serviço</button>
-  </form>
-
+<button type="submit">Cadastrar</button>
+</form>
   <div class="cards" id="cardsContainer"></div>
 
   <div class="modal" id="modal">
@@ -44,12 +43,9 @@
       <div id="modalContent"></div>
     </div>
   </div>
-
-  <script src="script.js"></script>
 </body>
 </html>
-
-
+    <script src="script.js"></script>
     <script src="app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
   </body>
