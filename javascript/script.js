@@ -1,22 +1,49 @@
-function fecharVisualizar() {
-    document.getElementById("modalVisualizar").style.display = "none";
+// Utilitários para Local Storage
+function getMural() {
+    return JSON.parse(localStorage.getItem('mural')) || [];
 }
 
+function setMural(mural) {
+    localStorage.setItem('mural', JSON.stringify(mural));
+}
 
-async function mostrarCards() {
+// Exibe todos os cards
+function mostrarCards() {
+    const mural = getMural();
+    exibirCards(mural);
+}
+
+// Exibe cards filtrados
+function exibirCards(mural, categoriaSelecionada = "") {
     const cardsContainer = document.querySelector(".cards");
     cardsContainer.innerHTML = "";
 
-    try {
-        const response = await fetch("controller/listarMural.php");
-        const mural = await response.json();
+    if (mural.length === 0) {
+        // Verifica se o usuário filtrou por categoria
+        if (categoriaSelecionada && getMural().length > 0) {
+            cardsContainer.innerHTML = `
+                <div class="text-center mt-5">
+                    <img src="img/empty.png" alt="Nenhum anúncio" style="max-width:150px;opacity:0.7;">
+                    <p class="mt-3 fs-5">Nenhum anúncio encontrado para a categoria selecionada.</p>
+                </div>
+            `;
+        } else {
+            cardsContainer.innerHTML = `
+                <div class="text-center mt-5">
+                    <img src="img/empty.png" alt="Nenhum anúncio" style="max-width:150px;opacity:0.7;">
+                    <p class="mt-3 fs-5">Nenhum anúncio cadastrado ainda.</p>
+                </div>
+            `;
+        }
+        return;
+    }
 
-        mural.forEach((item) => {
-            const numeroLimpo = item.telefone.replace(/\D/g, '');
-            const tipoClasseBtn = item.categoria === 'V' ? 'btn-vendo' : 'btn-ofereco';
+    mural.forEach((item, idx) => {
+        const numeroLimpo = (item.telefone || '').replace(/\D/g, '');
+        const tipoClasseBtn = item.categoria === 'V' ? 'btn-vendo' : 'btn-ofereco';
 
-            const card = `
-            <div class="card m-2 p-3 d-flex flex-column justify-content-between" style="width: 18rem; height: 30rem;">
+        const card = `
+            <div class="card m-2 d-flex flex-column justify-content-between" style="width: 18rem; height: 30rem;">
                 <span class="categoria ${item.categoria === 'V' ? 'vendo' : 'ofereco'}">
                     ${item.categoria === 'V' ? 'Vendo' : 'Ofereço'}
                 </span>
@@ -26,38 +53,99 @@ async function mostrarCards() {
                 <p><strong>Email:</strong> ${item.email}</p>
                 <p><strong>Telefone:</strong> ${item.telefone}</p>
                 <div class="mt-auto">
-                    <div class="mt-2 d-flex gap-2">
-                        <a href="tel:${numeroLimpo}" class="${tipoClasseBtn} botao-metade" target="_blank">
-                            <img src="imagens/telefone.png" alt="Telefone" class="telWhats"> Ligar
-                        </a>
-                        <a href="https://wa.me/${numeroLimpo}" class="${tipoClasseBtn} botao-metade" target="_blank">
-                            <img src="imagens/whatsapp.png" alt="Telefone" class="telWhats"> Whats
-                        </a>
-                    </div>
-                    <div class="mt-2">
-                        <div class="btn-ver-mais ${item.categoria === 'V' ? 'vendo' : 'ofereco'}" onclick="abrirVisualizar(${item.id})">
-                            Ver mais
-                        </div>
-                    </div>
+                    <button class="btn btn-outline-primary w-100" onclick="abrirVisualizar(${idx})">Ver mais</button>
                 </div>
             </div>
         `;
-            cardsContainer.innerHTML += card;
-        });
+        cardsContainer.innerHTML += card;
+    });
+}
 
-    } catch (error) {
-        console.error("Erro ao carregar mural:", error);
+// Inserir novo anúncio
+document.getElementById('formInserir').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const mural = getMural();
+
+    const novo = {
+        categoria: document.getElementById('categoria').value,
+        nome: document.getElementById('nome').value,
+        email: document.getElementById('email').value,
+        telefone: document.getElementById('telefone').value,
+        titulo: document.getElementById('titulo').value,
+        descricao: document.getElementById('descricao').value
+    };
+
+    mural.push(novo);
+    setMural(mural);
+
+    exibirAlerta("Anúncio inserido com sucesso!", "sucesso");
+    this.reset();
+    mostrarCards();
+
+    // Fechar modal Bootstrap se estiver usando
+    if (typeof bootstrap !== "undefined") {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalInserir'));
+        if (modal) modal.hide();
+    }
+});
+
+// Filtrar anúncios
+document.getElementById("formFiltrar").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const categoria = document.getElementById("filtroCategoria").value;
+    let mural = getMural();
+
+    if (categoria) {
+        mural = mural.filter(item => item.categoria === categoria);
+    }
+
+    exibirCards(mural, categoria);
+
+    // Fecha o modal de filtro (Bootstrap)
+    if (typeof bootstrap !== "undefined") {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalFiltrar'));
+        if (modal) modal.hide();
+    }
+
+    document.getElementById("alertaFiltro").style.display = "block";
+    setTimeout(() => {
+        document.getElementById("alertaFiltro").style.display = "none";
+    }, 2000);
+});
+
+// Visualizar anúncio
+async function abrirVisualizar(idx) {
+    const mural = getMural();
+    const item = mural[idx];
+    if (!item) return;
+
+    document.getElementById("visualizarTitulo").textContent = item.titulo;
+    document.getElementById("visualizarDescricao").textContent = item.descricao;
+    document.getElementById("visualizarNome").textContent = item.nome;
+    document.getElementById("visualizarEmail").textContent = item.email;
+    document.getElementById("visualizarTelefone").textContent = item.telefone;
+
+    const numeroLimpo = (item.telefone ?? '').replace(/\D/g, '');   
+
+    document.getElementById("modalVisualizar").style.display = "block";
+
+    if (typeof bootstrap !== "undefined") {
+        const modal = new bootstrap.Modal(document.getElementById('modalVisualizar'));
+        modal.show();
     }
 }
 
+function fecharVisualizar() {
+    document.getElementById("modalVisualizar").style.display = "none";
 
-window.onload = function () {
-    mostrarCards();
-    const telefoneInput = document.getElementById("telefone");
-    aplicarMascaraTelefone(telefoneInput);
-};
+    if (typeof bootstrap !== "undefined") {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalVisualizar'));
+        if (modal) modal.hide();
+    }
+}
 
-
+// Utilitário de alerta
 function exibirAlerta(mensagem, tipo = 'sucesso') {
     const alerta = document.getElementById("alerta");
     alerta.className = `alerta ${tipo}`;
@@ -68,54 +156,7 @@ function exibirAlerta(mensagem, tipo = 'sucesso') {
     }, 3000);
 }
 
-
-async function abrirVisualizar(id) {
-    try {
-        const response = await fetch(`controller/visualizarMural.php?id=${id}`);
-        const item = await response.json();
-
-        document.getElementById("visualizarTitulo").textContent = item.titulo;
-        document.getElementById("visualizarDescricao").textContent = item.descricao;
-        document.getElementById("visualizarNome").textContent = item.nome;
-        document.getElementById("visualizarEmail").textContent = item.email;
-        document.getElementById("visualizarTelefone").textContent = item.telefone;
-
-    
-        const numeroLimpo = (item.telefone ?? '').replace(/\D/g, '');
-        const linkLigar = document.getElementById("linkLigar");
-        const linkWhatsapp = document.getElementById("linkWhatsapp");
-
-        linkLigar.href = `tel:${numeroLimpo}`;
-        linkWhatsapp.href = `https://wa.me/${numeroLimpo}`;
-
-        linkLigar.classList.remove('btn-vendo', 'btn-ofereco');
-        linkWhatsapp.classList.remove('btn-vendo', 'btn-ofereco');
-
-        const classeCategoria = item.categoria === 'V' ? 'btn-vendo' : 'btn-ofereco';
-        linkLigar.classList.add(classeCategoria);
-        linkWhatsapp.classList.add(classeCategoria);
-
-        document.getElementById("modalVisualizar").style.display = "block";
-
-    } catch (error) {
-        console.error("Erro ao visualizar item:", error);
-    }
-}
-
-function fecharVisualizar() {
-    document.getElementById("modalVisualizar").style.display = "none";
-}
-
-const modal = document.getElementById("modalVisualizar");
-
-modal.addEventListener("click", function(event) {
-
-  if (event.target === modal) {
-    fecharVisualizar();
-  }
-});
-
-
+// Máscara telefone
 function aplicarMascaraTelefone(input) {
     input.addEventListener("input", function () {
         let valor = input.value.replace(/\D/g, "");
@@ -127,84 +168,9 @@ function aplicarMascaraTelefone(input) {
     });
 }
 
-
-function abrirFiltrar() {
-    document.getElementById("modalFiltrar").style.display = "block";
-}
-
-window.onclick = function(event) {
-    const modal = document.getElementById("modalFiltrar");
-    if (event.target === modal) {
-        fecharFiltrar();
-    }
-}
-
-
-document.getElementById("formFiltrar").addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    const categoria = document.getElementById("filtroCategoria").value;
-    const titulo = document.getElementById("filtroTitulo").value;
-
-    try {
-        const response = await fetch(`controller/filtroMural.php?filtroCategoria=${encodeURIComponent(categoria)}&filtroTitulo=${encodeURIComponent(titulo)}`);
-        const resultados = await response.json();
-
-        exibirCards(resultados); 
-        fecharFiltrar();
-
-        document.getElementById("alertaFiltro").style.display = "block";
-        setTimeout(() => {
-            document.getElementById("alertaFiltro").style.display = "none";
-        }, 3000);
-    } catch (error) {
-        console.error("Erro ao aplicar filtro:", error);
-    }
-});
-
-function exibirCards(mural) {
-    const cardsContainer = document.querySelector(".cards");
-    cardsContainer.innerHTML = "";
-
-    mural.forEach((item) => {
-        const numeroLimpo = item.telefone.replace(/\D/g, '');
-        const tipoClasseBtn = item.categoria === 'V' ? 'btn-vendo' : 'btn-ofereco';
-
-        const card = `
-            <div class="card m-2 p-3 d-flex flex-column justify-content-between" style="width: 18rem; height: 30rem;">
-                <span class="categoria ${item.categoria === 'V' ? 'vendo' : 'ofereco'}">
-                    ${item.categoria === 'V' ? 'Vendo' : 'Ofereço'}
-                </span>
-                <h3 class="card-title mt-2 text-center">${item.titulo}</h3>
-                <p class="descricao-limitada">${item.descricao}</p>
-                <p><strong>Nome:</strong> ${item.nome}</p>
-                <p><strong>Email:</strong> ${item.email}</p>
-                <p><strong>Telefone:</strong> ${item.telefone}</p>
-                <div class="mt-auto">
-                    <div class="mt-2 d-flex gap-2">
-                        <a href="tel:${numeroLimpo}" class="${tipoClasseBtn} botao-metade" target="_blank">
-                            <img src="imagens/telefone.png" alt="Telefone" class="telWhats"> Ligar
-                        </a>
-                        <a href="https://wa.me/${numeroLimpo}" class="${tipoClasseBtn} botao-metade" target="_blank">
-                            <img src="imagens/whatsapp.png" alt="WhatsApp" class="telWhats"> Whats
-                        </a>
-                    </div>
-                    <div class="mt-2">
-                       <div class="btn-ver-mais ${item.categoria === 'V' ? 'vendo' : 'ofereco'}" onclick="abrirVisualizar(${item.id})">
-                            Ver mais
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        cardsContainer.innerHTML += card;
-    });
-
-    if (mural.length === 0) {
-        cardsContainer.innerHTML = "<p class='text-center mt-3'>Nenhum resultado encontrado com esse filtro.</p>";
-    }
-}
-
-function fecharFiltrar() {
-    document.getElementById("modalFiltrar").style.display = "none";
-}
+// Inicialização
+window.onload = function () {
+    exibirCards(getMural());
+    const telefoneInput = document.getElementById("telefone");
+    if (telefoneInput) aplicarMascaraTelefone(telefoneInput);
+};
